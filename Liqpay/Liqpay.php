@@ -4,12 +4,13 @@
  *
  * Written in 2024 by Taras Kondratyuk (https://namingo.org/)
  *
- * Includes code from FOSSBilling default modules
- * Copyright 2022-2024 FOSSBilling
- * Copyright 2011-2021 BoxBilling, Inc.
- * SPDX-License-Identifier: Apache-2.0.
+ * Includes code from Liqpay Payment Module
+ * @copyright       Copyright (c) 2014 Liqpay (https://github.com/liqpay/sdk-php)
+ * @license         http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  *
- * @copyright FOSSBilling (https://www.fossbilling.org)
+ * Includes code from FOSSBilling default modules
+ * Copyright 2022-2024 FOSSBilling (https://www.fossbilling.org)
+ * Copyright 2011-2021 BoxBilling, Inc.
  * @license http://www.apache.org/licenses/LICENSE-2.0 Apache-2.0
  */
 
@@ -228,13 +229,13 @@ class Payment_Adapter_Liqpay implements FOSSBilling\InjectionAwareInterface
 
         $params['language'] = $this->config['language'];
         $params['public_key'] = ($this->config['test_mode']) ? $this->config['test_pub_key'] : $this->config['pub_key'];
-        $params['private_key'] = ($this->config['test_mode']) ? $this->config['test_priv_key'] : $this->config['priv_key']; //todo
+        $params['private_key'] = ($this->config['test_mode']) ? $this->config['test_priv_key'] : $this->config['priv_key'];
         $params['amount'] = $invoiceService->getTotalWithTax($invoice);
         $params['action'] = 'pay';
         $params['description'] = $this->getInvoiceTitle($invoice);
         $params['version'] = '3';
         $params['server_url'] = $this->config['notify_url'];
-        $params['result_url'] = $this->config['thankyou_url'];
+        $params['result_url'] = $this->config['return_url'];
         $params['order_id'] = $invoice->id . '.' . uniqid('', true);
 
         if (!isset($invoice->currency)) {
@@ -292,7 +293,7 @@ class Payment_Adapter_Liqpay implements FOSSBilling\InjectionAwareInterface
     public function api($path, $params = array(), $timeout = 5)
     {
         $url = $this->_api_url . $path;
-        $private_key = $this->config['test_priv_key'];
+        $private_key = ($this->config['test_mode']) ? $this->config['test_priv_key'] : $this->config['priv_key'];
         $data = $this->encode_params($params);
         $signature = $this->str_to_sign($private_key . $data . $private_key);
         $postfields = http_build_query(array(
@@ -326,7 +327,7 @@ class Payment_Adapter_Liqpay implements FOSSBilling\InjectionAwareInterface
      */
     public function cnb_signature($params)
     {
-        $private_key = $this->config['test_priv_key'];
+        $private_key = ($this->config['test_mode']) ? $this->config['test_priv_key'] : $this->config['priv_key'];
 
         $json = $this->encode_params($params);
         $signature = $this->str_to_sign($private_key . $json . $private_key);
